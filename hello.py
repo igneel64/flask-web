@@ -1,21 +1,19 @@
-from flask import Flask, request, make_response, redirect, url_for
+from flask import Flask, request, make_response, redirect, url_for, render_template
 from flask_script import Manager
+from flask_bootstrap import Bootstrap
 app = Flask('flask-web')
 manager = Manager(app)
+bootstrap = Bootstrap(app)
 
 @app.route('/')
 def index():
-	return '<h1>Hello World!</h1>'
+	return render_template('index.html')
 
 @app.route('/user/<name>')
 def user(name):
-	user_agent = request.headers.get('User-Agent')
-	if(user_agent != 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36'):
+	if(request.headers.get('User-Agent') != 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36'):
 		return redirect(url_for('index'))
-	response = make_response('<h1>Hello, {0}, u are using the correct User-Agent</h1>'.format(name))
-	response.set_cookie('user', 'petros')
-	return response
+	return render_template('user.html', name = name)
 
 if __name__ == '__main__':
-	app.run(debug=True, threaded = True)
 	manager.run()
