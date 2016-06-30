@@ -1,5 +1,16 @@
 {% extends "bootstrap/base.html" %}
+{% block head %}
+  {{ super() }}
+  <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static',filename = 'images/favicon.ico') }}">
+  {% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+  {% endblock %}
+
+{% endblock %}
 {% block title %}Flasky{% endblock %}
+
+
 
 {% block navbar %}
 <div class="navbar navbar-inverse" role="navigation">
@@ -23,9 +34,15 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
-	<div class="page-header">
-		<h1>Hello, {{name}}!</h1>
-	</div>	
+<div class="container" >
+  {% for message in get_flashed_messages() %}
+  <div class="alert alert-warning">
+    <button class="close" type="button" data-dismiss="alert">
+      &times;
+    </button>
+    {{message}}
+  </div>
+  {% endfor %}
+	{% block page_content %}{% endblock %}
 </div>
 {% endblock %}
