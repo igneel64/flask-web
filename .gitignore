@@ -84,7 +84,8 @@ ENV/
 
 #migrations
 migrations/
-.config
+
+config.py
 # Spyder project settings
 .spyderproject
 
