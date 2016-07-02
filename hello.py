@@ -8,21 +8,38 @@ from flask_wtf import Form
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate, MigrateCommand
+from flask_mail import Mail, Message
+import config
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 #ADD TO GIT, TEST ASSETS AND TIME, COMPLETE FORMS AND EXPERIMENT WITH ALL
 
 
 app = Flask('flask-web')
-app.config.from_pyfile('config.cfg') #make from object
-app.config['SQLALCHEMY_DATABASE_URI'] ='sqlite:///'+os.path.join(basedir,'data.sqlite')
+app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
+app.config['SECRET_KEY'] = config.SECRET_KEY
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = config.SQLALCHEMY_COMMIT_ON_TEARDOWN
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = config.SQLALCHEMY_TRACK_MODIFICATIONS
+app.config['MAIL_SERVER'] = config.MAIL_SERVER
+app.config['MAIL_PORT'] = config.MAIL_PORT
+app.config['MAIL_USE_SSL'] = config.MAIL_USE_SSL
+app.config['MAIL_USE_TLS'] = config.MAIL_USE_TLS
+app.config['MAIL_USERNAME'] = config.MAIL_USERNAME
+app.config['MAIL_PASSWORD'] = config.MAIL_PASSWORD
+app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = config.FLASKY_MAIL_SUBJECT_PREFIX
+app.config['FLASKY_MAIL_SENDER'] = config.FLASKY_MAIL_SENDER
+app.config['FLASKY_ADMIN'] = config.FLASKY_ADMIN
+mail = Mail(app)
 manager = Manager(app)
 moment = Moment(app)
 bootstrap = Bootstrap(app)
 db = SQLAlchemy(app)
+migrate = Migrate(app,db)
+
 
 def make_shell_context():
-	return dict(app = app, db = db, Role = Role)
+	return dict(app = app, db = db, Role = Role, User = User)
 
 class Role(db.Model):
 	__tablename__ = 'roles'
@@ -44,9 +61,14 @@ class NameForm(Form):
 	name = StringField('name', validators = [DataRequired()])
 	submit = SubmitField('Submit')		
 
+def send_email(to, subject, template, **kwargs):
+	msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX']+subject, sender = app.config['FLASKY_MAIL_SENDER'], recipients = [to])
+	msg.body = render_template(template + '.txt', **kwargs)
+	msg.html = render_template(template + '.html', **kwargs)
+	mail.send(msg)
+
 @app.route('/', methods = ['GET','POST'])
 def index():
-	import pdb;pdb.set_trace()
 	form = NameForm()
 	if form.validate_on_submit():
 		user = User.query.filter_by(username = form.name.data).first()
@@ -54,6 +76,9 @@ def index():
 			user = User(username = form.name.data)
 			db.session.add(user)
 			session['known'] = False
+			import pdb;pdb.set_trace()
+			if app.config['FLASKY_ADMIN']:
+				send_email(app.config['FLASKY_ADMIN'], 'New user', 'mail/new_user', user = user)
 		else:
 			session['known'] = True
 		session['name'] = form.name.data
@@ -73,6 +98,8 @@ def internal_server_error(e):
 
 manager.add_command('debug', Server(host='0.0.0.0',port =5000, use_debugger = True, use_reloader = True))
 manager.add_command('shell', Shell(make_context = make_shell_context))
+manager.add_command('db', MigrateCommand)
+
 if __name__ == '__main__':
 	db.create_all()
 	manager.run()
