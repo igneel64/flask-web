@@ -85,7 +85,12 @@ ENV/
 #migrations
 migrations/
 
+#config
 /*config.py
+
+#sqlite
+*.sqlite
+
 # Spyder project settings
 .spyderproject
 
