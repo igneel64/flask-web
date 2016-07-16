@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+
+{% block title %} Flasky - Confirm your account{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+	<h1>Hello {{ current_user.username }}!</h1>
+	<h2>You have not confirmed your account yet.</h2>
+</div>
+<div class= "col-md-4">
+	<p>Before you access this site please confirm your account. Check your inbox, an email has been sent to you with the confirmation link.</p>
+	<br>
+	<p>Need another confirmation email? <a href="{{url_for(auth.resend_confirmation)}}"></a></p>
+</div>
+{% endblock %}
